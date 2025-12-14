@@ -3,6 +3,7 @@ import { useNavigate, Link } from 'react-router-dom';
 import { UserPlus, Mail, Lock, User, Phone, ArrowLeft, Sparkles } from 'lucide-react';
 import { useTranslation } from '../i18n/translations';
 import { motion } from 'framer-motion';
+import { saveAuthUser } from '../utils/auth';
 
 export default function Register() {
   const navigate = useNavigate();
@@ -21,6 +22,23 @@ export default function Register() {
       alert(t.auth?.passwordMismatch || 'Passwords do not match!');
       return;
     }
+
+    const userData = {
+      name: formData.name,
+      email: formData.email,
+      phone: formData.phone,
+      totalJourneys: 0,
+      totalCheckpoints: 0,
+      favoriteCheckpoints: [],
+      joinedAt: new Date().toISOString(),
+      settings: {
+        demoMode: false,
+        language: 'id',
+        notifications: true,
+      },
+    };
+
+    saveAuthUser(userData);
     localStorage.setItem('kai_user_logged_in', 'true');
     navigate('/home');
   };

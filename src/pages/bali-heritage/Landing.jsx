@@ -8,6 +8,7 @@ import {
 import { route } from '../../data/route';
 import { checkpoints } from '../../data/checkpoints';
 import { formatPrice } from '../../utils/dateHelpers';
+import { isAuthenticated } from '../../utils/auth';
 import Header from '../../components/layout/Header';
 
 export default function Landing() {
@@ -19,6 +20,15 @@ export default function Landing() {
     window.addEventListener('scroll', handleScroll);
     return () => window.removeEventListener('scroll', handleScroll);
   }, []);
+
+  const handleBookNow = () => {
+    if (!isAuthenticated()) {
+      localStorage.setItem('kai_intended_path', '/bali-heritage/booking');
+      navigate('/login');
+    } else {
+      navigate('/bali-heritage/booking');
+    }
+  };
 
   const checkpointsList = [
     { title: 'Pura Besakih', time: '08:00 AM', desc: 'The Mother Temple of Bali', img: 'https://images.unsplash.com/photo-1537996194471-e657df975ab4?w=600' },
@@ -49,7 +59,7 @@ export default function Landing() {
               KAI Premium Experience
             </span>
             <h1 className="text-5xl md:text-7xl font-bold text-white mb-4 tracking-tight drop-shadow-xl leading-tight">
-              Bali Heritage<br /> <span className="text-kai-orange">Rail Circuit</span>
+              Kereta<br /> <span className="text-kai-orange">Eksplorasi Bali</span>
             </h1>
             <p className="text-white/90 text-lg md:text-xl max-w-xl mx-auto leading-relaxed drop-shadow-md">
               Sebuah perjalanan melintasi waktu, budaya, dan spiritualitas Pulau Dewata dalam kemewahan kereta api kelas dunia.
@@ -73,7 +83,7 @@ export default function Landing() {
             <div className="flex flex-wrap gap-4">
               <div className="flex items-center gap-2">
                 <Clock className="w-5 h-5 text-kai-orange" />
-                <span className="font-semibold text-sm">Full Day (8 Jam)</span>
+                <span className="font-semibold text-sm">Half Day (5 Jam)</span>
               </div>
               <div className="flex items-center gap-2">
                 <Users className="w-5 h-5 text-kai-primary" />
@@ -196,12 +206,12 @@ export default function Landing() {
           <div>
             <p className="text-xs text-gray-500 uppercase tracking-wide font-bold">Harga Paket</p>
             <div className="flex items-baseline gap-1">
-              <span className="text-2xl font-bold text-kai-primary">Rp 750.000</span>
+              <span className="text-xl font-bold text-kai-primary">Rp500.000</span>
               <span className="text-xs text-gray-400">/pax</span>
             </div>
           </div>
           <button
-            onClick={() => navigate('/bali-heritage/booking')}
+            onClick={handleBookNow}
             className="bg-kai-orange hover:bg-kai-orange-dark text-white px-8 py-3 rounded-xl font-bold shadow-lg shadow-orange-500/30 transition-all active:scale-95 flex items-center gap-2"
           >
             <Ticket className="w-5 h-5" />

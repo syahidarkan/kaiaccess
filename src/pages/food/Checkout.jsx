@@ -1,11 +1,19 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { CreditCard, Wallet, Building2, CheckCircle, AlertCircle } from 'lucide-react';
 import { useFoodOrderStore } from '../../store/useFoodOrderStore';
+import { isAuthenticated } from '../../utils/auth';
 import Header from '../../components/layout/Header';
 
 export default function Checkout() {
   const navigate = useNavigate();
+
+  useEffect(() => {
+    if (!isAuthenticated()) {
+      localStorage.setItem('kai_intended_path', '/food/checkout');
+      navigate('/login', { replace: true });
+    }
+  }, [navigate]);
   const {
     cart,
     getCartTotal,

@@ -15,7 +15,7 @@ import { useUserStore } from '../../store/useUserStore';
 import { route } from '../../data/route';
 import { calculateDistance, formatDistance } from '../../utils/distance';
 import { checkJourneyStatus } from '../../utils/dateHelpers';
-import { watchPosition, clearWatch, getCurrentPosition } from '../../utils/geolocation';
+import { startRouteSimulation } from '../../utils/routeSimulator';
 import { createDemoJourney } from '../../utils/demoMode';
 import Header from '../../components/layout/Header';
 import KayFab from '../../components/kay/KayFab';
@@ -187,9 +187,9 @@ const DashboardView = ({
         <div className="flex justify-between items-end relative z-10">
           <div>
             <h2 className="text-3xl font-bold font-display leading-tight text-white mb-1 drop-shadow-md">Misi Perjalanan</h2>
-            <p className="text-blue-100/80 text-sm font-medium">Bali Heritage Rail Circuit</p>
+            <p className="text-blue-100/80 text-sm font-medium">Kereta Eksplorasi Bali</p>
           </div>
-          <div className="text-right bg-white/10 backdrop-blur-md px-4 py-3 rounded-2xl border border-white/20 shadow-lg">
+          <div className="text-right bg-white/10 backdrop-blur-md px-4 py-3   rounded-2xl border border-white/20 shadow-lg">
             <div className="flex items-end gap-1 justify-end">
               <span className="block text-3xl font-bold text-white leading-none">{progress}</span>
               <span className="text-sm text-white/80 font-bold mb-1">%</span>
@@ -430,17 +430,20 @@ export default function Journey() {
       setDemoJourney(demo);
       return () => demo.stop();
     } else {
-      getCurrentPosition().then(pos => {
+      // Use simulated GPS tracking along the route
+      const simulator = startRouteSimulation((pos) => {
         setCurrentLocation(pos);
         setMapCenter([pos.lat, pos.lng]);
-      }).catch(e => console.error(e));
-
-      const id = watchPosition(pos => {
-        setCurrentLocation(pos);
         updateLocation(pos);
         checkNearbyCheckpoints(pos);
-      }, (e) => console.error(e));
-      return () => clearWatch(id);
+      });
+
+      // Set initial position
+      const initialPos = { lat: -8.7467, lng: 115.1670 }; // Airport start
+      setCurrentLocation(initialPos);
+      setMapCenter([initialPos.lat, initialPos.lng]);
+
+      return () => simulator.stop();
     }
   }, [bookingId]);
 

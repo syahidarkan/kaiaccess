@@ -1,11 +1,19 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { Trash2, Plus, Minus, ShoppingBag, AlertCircle, Calendar, Train, MapPin, Armchair, Package, Edit3, Check } from 'lucide-react';
 import { useFoodOrderStore } from '../../store/useFoodOrderStore';
+import { isAuthenticated } from '../../utils/auth';
 import Header from '../../components/layout/Header';
 
 export default function Cart() {
   const navigate = useNavigate();
+
+  useEffect(() => {
+    if (!isAuthenticated()) {
+      localStorage.setItem('kai_intended_path', '/food/cart');
+      navigate('/login', { replace: true });
+    }
+  }, [navigate]);
   const {
     cart,
     removeFromCart,

@@ -7,12 +7,14 @@ import {
 import { useBookingStore } from '../store/useBookingStore';
 import { useTranslation } from '../i18n/translations';
 import LanguageSwitcher from '../components/LanguageSwitcher';
+import { getUserDisplayName } from '../utils/auth';
 
 export default function Home() {
   const navigate = useNavigate();
   const { bookings } = useBookingStore();
   const { t } = useTranslation();
   const [activePromo, setActivePromo] = useState(0);
+  const userName = getUserDisplayName();
 
   const services = [
     { icon: Train, label: t.home.intercity, route: '/coming-soon', gradient: 'from-orange-500 to-orange-600' },
@@ -65,7 +67,7 @@ export default function Home() {
               />
               <div>
                 <p className="text-white/70 text-xs font-medium">{t.home.welcome}</p>
-                <h1 className="text-white text-lg font-bold">Budi Santoso</h1>
+                <h1 className="text-white text-lg font-bold">{userName}</h1>
               </div>
             </div>
             <div className="flex items-center gap-2">
@@ -236,7 +238,7 @@ export default function Home() {
           <div className="bg-white rounded-2xl p-4 shadow-card border-l-4 border-kai-primary">
             <div className="flex items-center justify-between">
               <div>
-                <p className="font-bold text-kai-grey-900 mb-1">Bali Heritage Circuit</p>
+                <p className="font-bold text-kai-grey-900 mb-1">Kereta Eksplorasi Bali</p>
                 <p className="text-xs text-kai-grey-500">12 Apr 2025 • 08:00 AM</p>
               </div>
               <button

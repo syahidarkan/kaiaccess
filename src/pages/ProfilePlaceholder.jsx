@@ -4,9 +4,11 @@ import {
   Settings, LogOut, ChevronRight, Star, Ticket,
   CreditCard, Bell, HelpCircle, Shield, Mail, Phone
 } from 'lucide-react';
+import { getAuthUser, logout } from '../utils/auth';
 
 export default function ProfilePlaceholder() {
   const navigate = useNavigate();
+  const user = getAuthUser() || { name: 'Guest', email: '', phone: '' };
 
   const stats = [
     { label: 'Total Perjalanan', value: '3', icon: MapPin },
@@ -51,9 +53,9 @@ export default function ProfilePlaceholder() {
                 <User className="w-10 h-10" />
               </div>
               <div>
-                <h2 className="text-2xl font-bold mb-1">Budi Santoso</h2>
-                <p className="text-white/80 text-sm">user@kai.id</p>
-                <p className="text-white/70 text-xs mt-1">Member sejak Januari 2024</p>
+                <h2 className="text-2xl font-bold mb-1">{user.name}</h2>
+                <p className="text-white/80 text-sm">{user.email || 'guest@kai.id'}</p>
+                <p className="text-white/70 text-xs mt-1">Member sejak {user.joinedAt ? new Date(user.joinedAt).toLocaleDateString('id-ID', { month: 'long', year: 'numeric' }) : 'Januari 2024'}</p>
               </div>
             </div>
             <button
@@ -68,11 +70,11 @@ export default function ProfilePlaceholder() {
           <div className="space-y-2 mb-4">
             <div className="flex items-center gap-2 text-white/80 text-sm">
               <Mail className="w-4 h-4" />
-              <span>budisantoso@email.com</span>
+              <span>{user.email || 'guest@kai.id'}</span>
             </div>
             <div className="flex items-center gap-2 text-white/80 text-sm">
               <Phone className="w-4 h-4" />
-              <span>+62 812-3456-7890</span>
+              <span>{user.phone || '+62 xxx-xxxx-xxxx'}</span>
             </div>
           </div>
 
@@ -191,7 +193,7 @@ export default function ProfilePlaceholder() {
         <button
           onClick={() => {
             if (confirm('Apakah Anda yakin ingin keluar?')) {
-              localStorage.removeItem('kai_user_logged_in');
+              logout();
               navigate('/login');
             }
           }}

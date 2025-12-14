@@ -6,6 +6,8 @@ import {
 } from 'lucide-react';
 import { useBookingStore } from '../../store/useBookingStore';
 import { formatPrice, generateBookingCode } from '../../utils/dateHelpers';
+import { calculatePrice, getPriceLabel, getAllPrices } from '../../utils/pricingLogic';
+import { isAuthenticated } from '../../utils/auth';
 import { QRCodeSVG } from 'qrcode.react';
 import Header from '../../components/layout/Header';
 
@@ -14,59 +16,51 @@ export default function Booking() {
   const { createBooking } = useBookingStore();
   const [step, setStep] = useState(1);
 
-  // Check if user is logged in
+  // Auth guard - block guest users
   useEffect(() => {
-    const isLoggedIn = localStorage.getItem('kai_user_logged_in') === 'true';
-    if (!isLoggedIn) {
-      // Redirect to login with return path
+    if (!isAuthenticated()) {
       localStorage.setItem('kai_intended_path', '/bali-heritage/booking');
-      navigate('/login');
+      navigate('/login', { replace: true });
     }
   }, [navigate]);
 
   const [bookingData, setBookingData] = useState({
     date: '',
-    time: '08:00',
-    carriage: null,
+    time: '07:00',
     seat: null,
     passenger: { name: '', idNumber: '', phone: '', email: '' },
   });
   const [bookingResult, setBookingResult] = useState(null);
 
-  // Train carriages data
-  const carriages = [
-    { id: 1, name: 'Eksekutif A', class: 'Eksekutif', available: 45, total: 50, price: 450000 },
-    { id: 2, name: 'Eksekutif B', class: 'Eksekutif', available: 38, total: 50, price: 450000 },
-    { id: 3, name: 'Bisnis A', class: 'Bisnis', available: 52, total: 64, price: 350000 },
-    { id: 4, name: 'Bisnis B', class: 'Bisnis', available: 41, total: 64, price: 350000 },
-    { id: 5, name: 'Ekonomi A', class: 'Ekonomi', available: 72, total: 80, price: 250000 },
-    { id: 6, name: 'Ekonomi B', class: 'Ekonomi', available: 68, total: 80, price: 250000 },
-  ];
+  // Single ticket type with dynamic pricing
+  const getTicketPrice = () => {
+    if (!bookingData.date) return 500000;
+    const prices = getAllPrices(bookingData.date);
+    return prices.Eksekutif; // Use Eksekutif pricing as the single price
+  };
 
-  // Generate seats layout for selected carriage
+  const ticketPrice = getTicketPrice();
+
+  // Generate seats layout (single class, 50 seats)
   const generateSeats = () => {
-    if (!bookingData.carriage) return [];
-
-    const carriage = carriages.find(c => c.id === bookingData.carriage);
-    const rows = carriage.class === 'Eksekutif' ? 10 : carriage.class === 'Bisnis' ? 16 : 20;
-    const seatsPerRow = carriage.class === 'Eksekutif' ? 4 : 4;
-
+    const rows = 13;
+    const seatsPerRow = 4;
     const seats = [];
-    const occupiedSeats = [3, 7, 12, 15, 21, 28, 35, 42]; // Sample occupied seats
+    const occupiedSeats = [3, 7, 12, 15, 21, 28, 35, 42];
 
     for (let row = 0; row < rows; row++) {
       const rowSeats = [];
       for (let col = 0; col < seatsPerRow; col++) {
         const seatNumber = row * seatsPerRow + col + 1;
         const isOccupied = occupiedSeats.includes(seatNumber);
-        const isAisle = col === 1; // Aisle after 2nd seat
+        const isAisle = col === 1;
 
         rowSeats.push({
           number: seatNumber,
           row: row + 1,
           position: col < 2 ? 'A' + (col + 1) : 'B' + (col - 1),
           occupied: isOccupied,
-          forward: row % 2 === 0, // Alternating forward/backward facing
+          forward: row % 2 === 0,
         });
 
         if (isAisle && col === 1) {
@@ -80,18 +74,17 @@ export default function Booking() {
   };
 
   const handleSubmit = () => {
-    const selectedCarriage = carriages.find(c => c.id === bookingData.carriage);
     const booking = createBooking({
       ...bookingData,
-      price: selectedCarriage.price,
-      carriage: selectedCarriage.name,
+      price: ticketPrice,
+      carriage: 'Kereta Eksplorasi Bali',
     });
     setBookingResult(booking);
-    setStep(6);
+    setStep(5);
   };
 
   // Confirmation Screen
-  if (step === 6 && bookingResult) {
+  if (step === 5 && bookingResult) {
     return (
       <div className="min-h-screen bg-kai-grey-50">
         <Header title="Booking Confirmed" showBack={false} />
@@ -156,10 +149,9 @@ export default function Booking() {
   // Booking Steps
   const steps = [
     { number: 1, title: 'Tanggal', icon: Calendar },
-    { number: 2, title: 'Gerbong', icon: Train },
-    { number: 3, title: 'Kursi', icon: Armchair },
-    { number: 4, title: 'Penumpang', icon: Users },
-    { number: 5, title: 'Pembayaran', icon: CreditCard },
+    { number: 2, title: 'Kursi', icon: Armchair },
+    { number: 3, title: 'Penumpang', icon: Users },
+    { number: 4, title: 'Pembayaran', icon: CreditCard },
   ];
 
   return (
@@ -239,18 +231,55 @@ export default function Booking() {
                   onChange={(e) => setBookingData({ ...bookingData, time: e.target.value })}
                   className="w-full border border-kai-grey-300 rounded-xl p-4 focus:ring-2 focus:ring-kai-primary focus:border-transparent outline-none"
                 >
-                  <option value="06:00">06:00 - Pagi (Sunrise Tour)</option>
-                  <option value="08:00">08:00 - Pagi</option>
-                  <option value="10:00">10:00 - Siang</option>
-                  <option value="14:00">14:00 - Sore</option>
+                  <option value="07:00">07:00 - Pagi (07:00-13:00 WITA)</option>
+                  <option value="12:00">12:00 - Sore (12:00-18:30 WITA)</option>
                 </select>
               </div>
             </div>
+
+            {/* Dynamic Price Info */}
+            {bookingData.date && (
+              <div className={`rounded-xl p-4 border ${
+                getPriceLabel(bookingData.date).color === 'error'
+                  ? 'bg-error/10 border-error/20'
+                  : getPriceLabel(bookingData.date).color === 'warning'
+                  ? 'bg-warning/10 border-warning/20'
+                  : 'bg-success/10 border-success/20'
+              }`}>
+                <div className="flex items-center justify-between mb-2">
+                  <p className="text-sm font-bold text-kai-grey-900">
+                    {getPriceLabel(bookingData.date).label}
+                  </p>
+                  <span className={`text-xs font-bold px-2 py-1 rounded-full ${
+                    getPriceLabel(bookingData.date).color === 'error'
+                      ? 'bg-error text-white'
+                      : getPriceLabel(bookingData.date).color === 'warning'
+                      ? 'bg-warning text-white'
+                      : 'bg-success text-white'
+                  }`}>
+                    {getPriceLabel(bookingData.date).multiplier}
+                  </span>
+                </div>
+                <p className="text-xs text-kai-grey-700">
+                  <strong>Eksekutif:</strong> {formatPrice(getAllPrices(bookingData.date).Eksekutif)} •{' '}
+                  <strong>Bisnis:</strong> {formatPrice(getAllPrices(bookingData.date).Bisnis)} •{' '}
+                  <strong>Ekonomi:</strong> {formatPrice(getAllPrices(bookingData.date).Ekonomi)}
+                </p>
+              </div>
+            )}
 
             <div className="bg-kai-blue/10 rounded-xl p-4 border border-kai-blue/20">
               <p className="text-sm text-kai-grey-700">
                 <strong className="text-kai-primary">Info:</strong> Perjalanan heritage berlangsung selama 8 jam dengan 35+ checkpoint budaya di seluruh Bali.
               </p>
+            </div>
+
+            <div className="bg-white rounded-xl p-4 border border-kai-primary/20">
+              <div className="flex justify-between items-center mb-2">
+                <span className="text-sm text-kai-grey-700">Harga Tiket</span>
+                <span className="text-2xl font-bold text-kai-primary">{formatPrice(ticketPrice)}</span>
+              </div>
+              <p className="text-xs text-kai-grey-500">1 penumpang • Kereta Eksplorasi Bali</p>
             </div>
 
             <button
@@ -264,107 +293,13 @@ export default function Booking() {
           </div>
         )}
 
-        {/* Step 2: Select Train Carriage */}
+        {/* Step 2: Select Seat */}
         {step === 2 && (
-          <div className="space-y-6">
-            <div>
-              <h2 className="text-2xl font-bold text-kai-grey-900 mb-2">Pilih Gerbong Kereta</h2>
-              <p className="text-kai-grey-600 text-sm">Pilih kelas dan gerbong yang Anda inginkan</p>
-            </div>
-
-            <div className="space-y-3">
-              {carriages.map((carriage) => {
-                const isSelected = bookingData.carriage === carriage.id;
-                const availabilityPercent = (carriage.available / carriage.total) * 100;
-
-                return (
-                  <button
-                    key={carriage.id}
-                    onClick={() => setBookingData({ ...bookingData, carriage: carriage.id, seat: null })}
-                    className={`w-full text-left border-2 rounded-xl p-4 transition-all ${
-                      isSelected
-                        ? 'border-kai-primary bg-kai-primary/5 shadow-kai'
-                        : 'border-kai-grey-200 bg-white hover:border-kai-primary/50'
-                    }`}
-                  >
-                    <div className="flex items-start justify-between mb-3">
-                      <div className="flex-1">
-                        <div className="flex items-center gap-2 mb-1">
-                          <Train className={`w-5 h-5 ${isSelected ? 'text-kai-primary' : 'text-kai-grey-600'}`} />
-                          <h3 className="font-bold text-kai-grey-900">{carriage.name}</h3>
-                          <span className={`text-xs font-bold px-2 py-0.5 rounded-full ${
-                            carriage.class === 'Eksekutif'
-                              ? 'bg-kai-orange/10 text-kai-orange'
-                              : carriage.class === 'Bisnis'
-                              ? 'bg-kai-blue/10 text-kai-blue'
-                              : 'bg-kai-grey-200 text-kai-grey-700'
-                          }`}>
-                            {carriage.class}
-                          </span>
-                        </div>
-                        <p className="text-xl font-bold text-kai-primary">{formatPrice(carriage.price)}</p>
-                      </div>
-                      <div className={`w-6 h-6 rounded-full border-2 flex items-center justify-center ${
-                        isSelected
-                          ? 'border-kai-primary bg-kai-primary'
-                          : 'border-kai-grey-300 bg-white'
-                      }`}>
-                        {isSelected && <Check className="w-4 h-4 text-white" />}
-                      </div>
-                    </div>
-
-                    <div className="space-y-2">
-                      <div className="flex items-center justify-between text-xs text-kai-grey-600">
-                        <span>{carriage.available} kursi tersedia</span>
-                        <span>{carriage.total} total kursi</span>
-                      </div>
-                      <div className="w-full bg-kai-grey-200 rounded-full h-2">
-                        <div
-                          className={`h-2 rounded-full transition-all ${
-                            availabilityPercent > 50 ? 'bg-success' : availabilityPercent > 25 ? 'bg-warning' : 'bg-error'
-                          }`}
-                          style={{ width: `${availabilityPercent}%` }}
-                        />
-                      </div>
-                    </div>
-
-                    {carriage.class === 'Eksekutif' && (
-                      <div className="mt-3 pt-3 border-t border-kai-grey-200 text-xs text-kai-grey-600">
-                        ✓ Kursi kulit • AC • Snack & minuman • WiFi • Colokan listrik
-                      </div>
-                    )}
-                  </button>
-                );
-              })}
-            </div>
-
-            <div className="flex gap-3">
-              <button
-                onClick={() => setStep(1)}
-                className="flex-1 bg-kai-grey-100 text-kai-grey-700 py-4 rounded-xl font-bold hover:bg-kai-grey-200 transition-colors flex items-center justify-center gap-2"
-              >
-                <ChevronLeft className="w-5 h-5" />
-                Kembali
-              </button>
-              <button
-                onClick={() => setStep(3)}
-                disabled={!bookingData.carriage}
-                className="flex-1 bg-kai-primary text-white py-4 rounded-xl font-bold disabled:opacity-50 disabled:cursor-not-allowed hover:bg-kai-primary-dark transition-all shadow-kai flex items-center justify-center gap-2"
-              >
-                Lanjutkan
-                <ArrowRight className="w-5 h-5" />
-              </button>
-            </div>
-          </div>
-        )}
-
-        {/* Step 3: Select Seat */}
-        {step === 3 && (
           <div className="space-y-6">
             <div>
               <h2 className="text-2xl font-bold text-kai-grey-900 mb-2">Pilih Kursi</h2>
               <p className="text-kai-grey-600 text-sm">
-                Gerbong {carriages.find(c => c.id === bookingData.carriage)?.name}
+                Kereta Eksplorasi Bali • 50 kursi tersedia
               </p>
             </div>
 
@@ -465,14 +400,14 @@ export default function Booking() {
 
             <div className="flex gap-3">
               <button
-                onClick={() => setStep(2)}
+                onClick={() => setStep(1)}
                 className="flex-1 bg-kai-grey-100 text-kai-grey-700 py-4 rounded-xl font-bold hover:bg-kai-grey-200 transition-colors flex items-center justify-center gap-2"
               >
                 <ChevronLeft className="w-5 h-5" />
                 Kembali
               </button>
               <button
-                onClick={() => setStep(4)}
+                onClick={() => setStep(3)}
                 disabled={!bookingData.seat}
                 className="flex-1 bg-kai-primary text-white py-4 rounded-xl font-bold disabled:opacity-50 disabled:cursor-not-allowed hover:bg-kai-primary-dark transition-all shadow-kai flex items-center justify-center gap-2"
               >
@@ -483,8 +418,8 @@ export default function Booking() {
           </div>
         )}
 
-        {/* Step 4: Passenger Details */}
-        {step === 4 && (
+        {/* Step 3: Passenger Details */}
+        {step === 3 && (
           <div className="space-y-6">
             <div>
               <h2 className="text-2xl font-bold text-kai-grey-900 mb-2">Data Penumpang</h2>
@@ -547,14 +482,14 @@ export default function Booking() {
 
             <div className="flex gap-3">
               <button
-                onClick={() => setStep(3)}
+                onClick={() => setStep(2)}
                 className="flex-1 bg-kai-grey-100 text-kai-grey-700 py-4 rounded-xl font-bold hover:bg-kai-grey-200 transition-colors flex items-center justify-center gap-2"
               >
                 <ChevronLeft className="w-5 h-5" />
                 Kembali
               </button>
               <button
-                onClick={() => setStep(5)}
+                onClick={() => setStep(4)}
                 disabled={!bookingData.passenger.name || !bookingData.passenger.email}
                 className="flex-1 bg-kai-primary text-white py-4 rounded-xl font-bold disabled:opacity-50 disabled:cursor-not-allowed hover:bg-kai-primary-dark transition-all shadow-kai flex items-center justify-center gap-2"
               >
@@ -565,8 +500,8 @@ export default function Booking() {
           </div>
         )}
 
-        {/* Step 5: Payment Summary */}
-        {step === 5 && (
+        {/* Step 4: Payment Summary */}
+        {step === 4 && (
           <div className="space-y-6">
             <div>
               <h2 className="text-2xl font-bold text-kai-grey-900 mb-2">Ringkasan Pembayaran</h2>
@@ -578,7 +513,7 @@ export default function Booking() {
               <div className="p-5 space-y-4">
                 <div>
                   <p className="text-xs text-kai-grey-600 mb-1">Rute Perjalanan</p>
-                  <p className="font-bold text-kai-grey-900">Bali Heritage Rail Circuit</p>
+                  <p className="font-bold text-kai-grey-900">Kereta Eksplorasi Bali</p>
                 </div>
 
                 <div className="grid grid-cols-2 gap-4">
@@ -592,17 +527,9 @@ export default function Booking() {
                   </div>
                 </div>
 
-                <div className="grid grid-cols-2 gap-4">
-                  <div>
-                    <p className="text-xs text-kai-grey-600 mb-1">Gerbong</p>
-                    <p className="font-bold text-kai-grey-900">
-                      {carriages.find(c => c.id === bookingData.carriage)?.name}
-                    </p>
-                  </div>
-                  <div>
-                    <p className="text-xs text-kai-grey-600 mb-1">Kursi</p>
-                    <p className="font-bold text-kai-grey-900">Nomor {bookingData.seat}</p>
-                  </div>
+                <div>
+                  <p className="text-xs text-kai-grey-600 mb-1">Kursi</p>
+                  <p className="font-bold text-kai-grey-900">Nomor {bookingData.seat}</p>
                 </div>
 
                 <div className="pt-4 border-t border-kai-grey-200">
@@ -618,7 +545,7 @@ export default function Booking() {
                   <div className="flex justify-between text-sm">
                     <span className="text-kai-grey-700">Harga Tiket</span>
                     <span className="font-semibold text-kai-grey-900">
-                      {formatPrice(carriages.find(c => c.id === bookingData.carriage)?.price)}
+                      {formatPrice(ticketPrice)}
                     </span>
                   </div>
                   <div className="flex justify-between text-sm">
@@ -628,7 +555,7 @@ export default function Booking() {
                   <div className="pt-3 border-t border-kai-grey-300 flex justify-between">
                     <span className="font-bold text-kai-grey-900">Total Pembayaran</span>
                     <span className="font-bold text-kai-primary text-xl">
-                      {formatPrice((carriages.find(c => c.id === bookingData.carriage)?.price || 0) + 5000)}
+                      {formatPrice(ticketPrice + 5000)}
                     </span>
                   </div>
                 </div>
@@ -658,7 +585,7 @@ export default function Booking() {
 
             <div className="flex gap-3">
               <button
-                onClick={() => setStep(4)}
+                onClick={() => setStep(3)}
                 className="flex-1 bg-kai-grey-100 text-kai-grey-700 py-4 rounded-xl font-bold hover:bg-kai-grey-200 transition-colors flex items-center justify-center gap-2"
               >
                 <ChevronLeft className="w-5 h-5" />

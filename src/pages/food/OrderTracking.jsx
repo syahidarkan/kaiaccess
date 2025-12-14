@@ -2,6 +2,7 @@ import { useEffect, useState } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { CheckCircle, Clock, ChefHat, PackageCheck, Truck, Star, ArrowLeft } from 'lucide-react';
 import { useFoodOrderStore } from '../../store/useFoodOrderStore';
+import { isAuthenticated } from '../../utils/auth';
 import Header from '../../components/layout/Header';
 
 export default function OrderTracking() {
@@ -11,6 +12,12 @@ export default function OrderTracking() {
   const [order, setOrder] = useState(null);
 
   useEffect(() => {
+    if (!isAuthenticated()) {
+      localStorage.setItem('kai_intended_path', `/food/order/${orderId}`);
+      navigate('/login', { replace: true });
+      return;
+    }
+
     const orderData = getOrderById(orderId);
     if (!orderData) {
       navigate('/food/orders');

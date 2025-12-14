@@ -1,12 +1,20 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { ShoppingCart, Search, Filter, Clock, Star, Leaf, ChefHat, Flame, Award } from 'lucide-react';
 import { foodMenu, foodCategories, getFoodByCategory, searchFood, getHalalFood } from '../../data/foodMenu';
 import { useFoodOrderStore } from '../../store/useFoodOrderStore';
+import { isAuthenticated } from '../../utils/auth';
 import Header from '../../components/layout/Header';
 
 export default function FoodMenu() {
   const navigate = useNavigate();
+
+  useEffect(() => {
+    if (!isAuthenticated()) {
+      localStorage.setItem('kai_intended_path', '/food/menu');
+      navigate('/login', { replace: true });
+    }
+  }, [navigate]);
   const { addToCart, getCartItemCount } = useFoodOrderStore();
   const [searchQuery, setSearchQuery] = useState('');
   const [selectedCategory, setSelectedCategory] = useState('all');

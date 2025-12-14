@@ -1,4 +1,4 @@
-// Comprehensive badge system for Bali Heritage Rail Experience
+// Comprehensive badge system for Kereta Eksplorasi Bali
 export const badges = [
   // Milestone Badges
   {
@@ -47,8 +47,8 @@ export const badges = [
     category: "milestone",
     icon: "👑",
     description: {
-      en: "Visited all checkpoints on the Bali Heritage Circuit",
-      id: "Mengunjungi semua checkpoint di Sirkuit Warisan Bali"
+      en: "Visited all checkpoints on Kereta Eksplorasi Bali",
+      id: "Mengunjungi semua checkpoint di Kereta Eksplorasi Bali"
     },
     requirement: "Unlock all 15 checkpoints",
     rarity: "legendary"
@@ -227,8 +227,8 @@ export const badges = [
     category: "achievement",
     icon: "✅",
     description: {
-      en: "Successfully completed the Bali Heritage Rail Experience",
-      id: "Berhasil menyelesaikan Pengalaman Kereta Warisan Bali"
+      en: "Successfully completed Kereta Eksplorasi Bali",
+      id: "Berhasil menyelesaikan Kereta Eksplorasi Bali"
     },
     requirement: "Complete full journey",
     rarity: "epic"

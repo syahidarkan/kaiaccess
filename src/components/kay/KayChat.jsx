@@ -3,7 +3,7 @@ import { Send, Minimize2 } from 'lucide-react';
 import { useKayStore } from '../../store/useKayStore';
 import { generateKayResponse } from '../../services/ollamaService';
 import KayAvatar from './KayAvatar';
-import AnimatedTrain from './AnimatedTrain';
+import TrainCharacter from './TrainCharacter';
 import { motion, AnimatePresence } from 'framer-motion';
 import { useTranslation } from '../../i18n/translations';
 
@@ -115,20 +115,25 @@ export default function KayChat() {
                         className="absolute inset-x-0 bottom-0 top-16 bg-white rounded-t-[2.5rem] shadow-premium flex flex-col overflow-hidden"
                     >
                         {/* Header with Avatar - ALWAYS VISIBLE, NEVER COVERED */}
-                        <div className="relative shrink-0 bg-gradient-to-br from-kai-primary via-kai-purple to-kai-accent-purple border-b border-white/10 shadow-large">
+                        <div className="relative shrink-0 bg-gradient-to-br from-kai-primary via-kai-purple to-kai-accent-purple border-b border-white/10 shadow-large overflow-hidden">
                             {/* Drag Handle */}
-                            <div className="w-12 h-1.5 bg-white/30 rounded-full mt-4 mx-auto" />
+                            <div className="w-12 h-1.5 bg-white/30 rounded-full mt-4 mx-auto relative z-20" />
 
                             {/* Close Button */}
                             <button
                                 onClick={toggleOpen}
-                                className="absolute top-4 right-6 bg-white/20 hover:bg-white/30 text-white p-2.5 rounded-xl transition-all z-20 active:scale-90 backdrop-blur-md border border-white/30 shadow-card"
+                                className="absolute top-4 right-6 bg-white/20 hover:bg-white/30 text-white p-2.5 rounded-xl transition-all z-30 active:scale-90 backdrop-blur-md border border-white/30 shadow-card"
                             >
                                 <Minimize2 className="w-5 h-5" />
                             </button>
 
+                            {/* Train Character - BEHIND Avatar */}
+                            <div className="absolute inset-0 z-0 flex items-center justify-center opacity-40">
+                                <TrainCharacter expression={avatarState === 'happy' ? 'happy' : avatarState === 'surprised' ? 'excited' : 'neutral'} />
+                            </div>
+
                             {/* KAY Avatar - PROMINENT, ALWAYS VISIBLE */}
-                            <div className="flex flex-col items-center pt-4 pb-6">
+                            <div className="relative z-10 flex flex-col items-center pt-4 pb-6">
                                 <div className="w-28 h-40 mb-3">
                                     <KayAvatar
                                         size="custom"
@@ -144,11 +149,8 @@ export default function KayChat() {
                             </div>
                         </div>
 
-                        {/* Chat Messages Area - With Animated Train Background */}
+                        {/* Chat Messages Area */}
                         <div className="flex-1 overflow-y-auto px-4 py-6 space-y-4 scroll-smooth bg-gradient-to-b from-kai-grey-50 to-white relative">
-                            {/* Animated Train Background */}
-                            <AnimatedTrain />
-
                             {chatHistory.length === 0 && (
                                 <div className="flex flex-col items-center justify-center h-full text-center p-8">
                                     <div className="w-20 h-20 bg-kai-blue-50 rounded-3xl flex items-center justify-center mb-4">
